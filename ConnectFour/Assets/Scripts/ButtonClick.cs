@@ -1,81 +1,135 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Vuforia;
 
-public class ButtonClick : MonoBehaviour, StateChange {
+public class ButtonClick : MonoBehaviour, IStateChange {
 
-    ArrayList clickHandler = new ArrayList();
-    GameObject VB1;
-    Color color;
+    
+    public Material selectedMaterial;
+    public Material unselectedMaterial;
+    public Material errorMaterial;
+    public Material lockedMaterial;
+    public AudioClip bellSound;
+
+    private readonly List<string> numbers = new List<string> { "n1_obj", "n2_obj", "n3_obj", "n4_obj", "n5_obj", "n6_obj", "n7_obj" };
+    private readonly List<string> virtualButtons = new List<string> { "VB1", "VB2", "VB3", "VB4", "VB5", "VB6", "VB7" };
+    private readonly List<VirtualClick> clickHandler = new List<VirtualClick>();
+
+    private AudioSource audioSource;
+    private VirtualClick currentSelectedButton = null;
+    private bool vibrateEnabled = false;
+
 
     // Start is called before the first frame update
     void Start() {
-
-        VirtulClick clickVB1 = new VirtulClick(this, GameObject.Find("BTN1"));
-        GameObject.Find("VB1").GetComponent<VirtualButtonBehaviour>().RegisterEventHandler(clickVB1);
-        clickHandler.Add(clickVB1);
-
-        VirtulClick clickVB2 = new VirtulClick(this, GameObject.Find("BTN2"));
-        GameObject.Find("VB2").GetComponent<VirtualButtonBehaviour>().RegisterEventHandler(clickVB2);
-        clickHandler.Add(clickVB2);
-
-        VirtulClick clickVB3 = new VirtulClick(this, GameObject.Find("BTN3"));
-        GameObject.Find("VB3").GetComponent<VirtualButtonBehaviour>().RegisterEventHandler(clickVB3);
-        clickHandler.Add(clickVB3);
+        InitButtonClickHandlers();
+        audioSource = GetComponent<AudioSource>();
     }
 
-    void StateChange.onStateChanged() {
-        Debug.Log("++++++++++++++++++++++++++++++");
-        //TODO one button got pressed or released
+    void IStateChange.OnStateChanged() {
+        List<VirtualClick> pressedHandlers = GetPressedVirtualButtonHandler();
+
+        if (pressedHandlers.Count == 0) {
+            currentSelectedButton.elapsedTime = VirtualClick.TIME_DELAY;
+            currentSelectedButton = null;
+            vibrateEnabled = false;
+
+        }
+        else if (pressedHandlers.Count == 1) {
+            currentSelectedButton = pressedHandlers[0];
+            UpdateMaterial(currentSelectedButton.buttonModel, selectedMaterial);
+
+        }
+        else if (pressedHandlers.Count > 1) {
+            if (currentSelectedButton != null) {
+                currentSelectedButton.elapsedTime = VirtualClick.TIME_DELAY;
+                currentSelectedButton = null;
+                vibrateEnabled = false;
+            }
+
+            foreach (var vc in pressedHandlers) {
+                UpdateMaterial(vc.buttonModel, errorMaterial);
+            }
+        }
     }
 
     // Update is called once per frame
     void Update() {
-        
+        if(currentSelectedButton == null) {
+            return;
+        }
+
+        var elapsedTime = Time.deltaTime;
+        currentSelectedButton.elapsedTime -= elapsedTime;
+
+        if(currentSelectedButton.elapsedTime <= 0 && !vibrateEnabled) {
+            UpdateMaterial(currentSelectedButton.buttonModel, lockedMaterial);
+            vibrateEnabled = true;
+            audioSource.PlayOneShot(bellSound);
+        }
+    }
+
+    private List<VirtualClick> GetPressedVirtualButtonHandler() {
+        List<VirtualClick> pressedHandlers = new List<VirtualClick>();
+        for (var i = 0; i < numbers.Count; i++) {
+            if (clickHandler[i].isPressed) {
+                pressedHandlers.Add(clickHandler[i]);
+
+            }
+            else {
+                UpdateMaterial(clickHandler[i].buttonModel, unselectedMaterial);
+            }
+        }
+        return pressedHandlers;
+    }
+
+    private void InitButtonClickHandlers() {
+        for (var i = 0; i < numbers.Count; i++) {
+            GameObject numberObj = GameObject.Find(numbers[i]);
+            VirtualClick virtualButton = new VirtualClick(this, numberObj);
+            GameObject.Find(virtualButtons[i]).GetComponent<VirtualButtonBehaviour>().RegisterEventHandler(virtualButton);
+            clickHandler.Add(virtualButton);
+        }
+    }
+
+    private void UpdateMaterial(GameObject gameObject, Material material) {
+        Renderer rend = gameObject.GetComponent<Renderer>();
+        rend.sharedMaterial = material;
     }
 
 
-    class VirtulClick : IVirtualButtonEventHandler {
+    class VirtualClick : IVirtualButtonEventHandler {
+
+        public static float TIME_DELAY = 1;
+
+        public readonly GameObject buttonModel;
 
         public bool isPressed = false;
+        public float elapsedTime = TIME_DELAY;
 
-        private readonly StateChange callback;
-        private readonly GameObject buttonModel;
+        private readonly IStateChange callback;
+        
 
-        public VirtulClick(StateChange stateChange, GameObject buttonModel) {
-            this.callback = stateChange;
+        public VirtualClick(IStateChange callback, GameObject buttonModel) {
+            this.callback = callback;
             this.buttonModel = buttonModel;
-        }
-
-        public void highlightButton() {
-            Debug.Log("pressed");
-            var renderer = buttonModel.GetComponent<Renderer>();
-            Debug.Log(renderer.material.color.ToString());
-            renderer.material.SetColor("_Color", Color.red);
-        }
-
-        public void resetButton() {
-            Debug.Log("pressed");
-            var renderer = buttonModel.GetComponent<Renderer>();
-            Debug.Log(renderer.material.color.ToString());
-            renderer.material.SetColor("_Color", Color.white);
         }
 
         public void OnButtonPressed(VirtualButtonBehaviour vb) {
             isPressed = true;
-            highlightButton();
-            callback.onStateChanged();
+            callback.OnStateChanged();
         }
 
         public void OnButtonReleased(VirtualButtonBehaviour vb) {
             isPressed = false;
-            resetButton();
-            callback.onStateChanged();
+            callback.OnStateChanged();
         }
     }
 }
 
-interface StateChange {
-    void onStateChanged();
+interface IStateChange {
+    void OnStateChanged();
 }
