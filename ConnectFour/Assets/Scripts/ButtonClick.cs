@@ -10,10 +10,8 @@ public class ButtonClick : MonoBehaviour, IStateChange {
     public Material errorMaterial;
     public Material lockedMaterial;
     public AudioClip bellSound;
-    public GameObject coin1;
-    public GameObject coin2;
 
-    public readonly List<GameObject> coins = new List<GameObject>();
+    //public readonly List<GameObject> coins = new List<GameObject>();
 
     private readonly List<string> numbers = new List<string> { "n1_obj", "n2_obj", "n3_obj", "n4_obj", "n5_obj", "n6_obj", "n7_obj" };
     private readonly List<string> virtualButtons = new List<string> { "VB1", "VB2", "VB3", "VB4", "VB5", "VB6", "VB7" };
@@ -48,6 +46,8 @@ public class ButtonClick : MonoBehaviour, IStateChange {
             audioSource.PlayOneShot(bellSound);
 
             coinHandler.PlaceCoin();
+            //TODO check if if column is full
+            //  if so than deactivate VB of this column
         }
     }
 
@@ -64,7 +64,7 @@ public class ButtonClick : MonoBehaviour, IStateChange {
         else if (pressedHandlers.Count == 1) {
             currentSelectedButton = pressedHandlers[0];
             UpdateMaterial(currentSelectedButton.buttonModel, selectedMaterial);
-            coinHandler.SetCoinPosition(1, clickHandler.IndexOf(currentSelectedButton));
+            coinHandler.SetCoinPosition(clickHandler.IndexOf(currentSelectedButton));
 
         }
         else if (pressedHandlers.Count > 1) {

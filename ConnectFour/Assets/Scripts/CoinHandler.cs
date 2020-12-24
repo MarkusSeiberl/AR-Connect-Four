@@ -17,19 +17,22 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
     private static readonly Vector3 COIN_POSITION_2 = new Vector3(-0.5341f, 0.9938f, -0.3121f);
     private static readonly Vector3 COIN_POSITION_3 = new Vector3(-0.5341f, 0.9938f, -0.1560f);
     private static readonly Vector3 COIN_POSITION_4 = new Vector3(-0.5341f, 0.9938f, 0f);
-    //private static readonly Vector3 COIN_POSITION_5 = new Vector3(-0.5341f, 0.9938f, 0.1560f);
-    private static readonly Vector3 COIN_POSITION_5 = new Vector3(-0.5341f, 1.9938f, 0.1960f);
+    private static readonly Vector3 COIN_POSITION_5 = new Vector3(-0.5341f, 0.9938f, 0.1560f);
     private static readonly Vector3 COIN_POSITION_6 = new Vector3(-0.5341f, 0.9938f, 0.3121f);
     private static readonly Vector3 COIN_POSITION_7 = new Vector3(-0.5341f, 0.9938f, 0.4682f);
 
     private readonly List<GameObject> placedCoins = new List<GameObject>();
-    private readonly int[,] gameField = new int[6,7];
 
-    private int currPlayerNr = -1; //player 1 = 1; player 2 = 2
+
+    private GameLogic gameLogic;
     private int currColumn = -1; //column starts at 0
     private GameObject currentCoin = null;
+    //private GameObject previewCoin = null;
     private TrackableBehaviour marker;
 
+    private void Awake() {
+        gameLogic = gameObject.AddComponent<GameLogic>();
+    }
 
     // Start is called before the first frame update
     void Start() {
@@ -66,68 +69,55 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
 
 
 
-    public void SetCoinPosition(int playerNr, int column) {
-        GameObject correctCoin = FetchCorrectCoin(playerNr);
+    public void SetCoinPosition(int column) {
         Vector3 correctPostion = FetchCorrectPosition(column);
+        int correctPlayerNr = gameLogic.GetCurrentPlayerNumber();
 
+        //if null:
+        //   player placed coin --> new players turn --> create new
+        //if not null:
+        //   still same player --> udpate position + enable
         if (null == currentCoin) {
-            InstantiateCoin(correctCoin, correctPostion);
-            currPlayerNr = playerNr;
-            currColumn = column;
-            return;
-        }
+            currentCoin = FetchCorrectCoin(correctPlayerNr, correctPostion);
 
-        if (currPlayerNr == playerNr) {
+        } else { 
             UpdateCoinPostion(correctPostion);
-        } else {
-            InstantiateCoin(correctCoin, correctPostion);
-        }
-
-        currPlayerNr = playerNr;
-        currColumn = column;    
+        } 
+        currColumn = column;   
     }
 
     public void PlaceCoin() {
-        //currentCoin.AddComponent<Rigidbody>();
-        //var mesh = currentCoin.AddComponent<MeshCollider>();
-        //mesh.convex = true;
-        GameObject duplicate = currentCoin;
-        placedCoins.Add(duplicate);
+        currentCoin.GetComponent<Rigidbody>().isKinematic = false;
+        placedCoins.Add(currentCoin);
+        gameLogic.PlaceCoin(currColumn);
         currentCoin = null;
-        int rowIndex = RowNumberOfNextFreeSlot(currColumn);
-        gameField[rowIndex, currColumn] = currPlayerNr;
+        //TODO call Gamelogic to place current coin
+        //TODO spawn new coin (for next player) but not active
 
     }
 
     public void RemoveCoin() {
-        Destroy(currentCoin);
-        currentCoin = null;
-        currPlayerNr = -1;
-        currColumn = -1;
+        currentCoin.SetActive(false);
+        //currentCoin = null;
+        //currPlayerNr = -1;
+        //currColumn = -1;
     }
 
-    private int RowNumberOfNextFreeSlot(int column) {
-        int nrOfCoins = 0;
 
-        for (int row = 0;  row < 6; row++) {
-            if (gameField[row, column] != 0) {
-                nrOfCoins += 1;
-                
-            }
-        }
-
-        return 5- nrOfCoins;
-    }
 
     private void UpdateCoinPostion(Vector3 correctPostion) {
         currentCoin.transform.localPosition = correctPostion;
+        currentCoin.SetActive(true);
     }
 
-    private GameObject FetchCorrectCoin(int playerNr) {
-        if (playerNr == 1) {
-            return coin1;
-        }
-        return coin2;
+    private GameObject FetchCorrectCoin(int playerNr, Vector3 position) {
+        var objectTag = "coin" + playerNr;
+        GameObject coin = pooler.SpawnFromPool(objectTag, position, Quaternion.identity);
+        coin.transform.parent = transform;
+        coin.transform.localPosition = position;
+        coin.transform.localScale = COIN_SCALE;
+
+        return coin;
     }
 
     private Vector3 FetchCorrectPosition(int column) { 
@@ -156,7 +146,7 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
         });
     }
 
-    private void InstantiateCoin(GameObject coin, Vector3 coinPosition) {
+    /*private void InstantiateCoin(GameObject coin, Vector3 coinPosition) {
         pooler.SpawnFromPool("coin1", coinPosition, COIN_ROTATION);
 
         //currentCoin = Instantiate(coin, transform, false);
@@ -164,5 +154,5 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
         //currentCoin.transform.localRotation = COIN_ROTATION;
         //currentCoin.transform.localScale = COIN_SCALE;
         currentCoin.transform.localPosition = coinPosition;
-    }
+    }*/
 }
