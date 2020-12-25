@@ -20,7 +20,6 @@ namespace Utility {
 
         private static ObjectPooler _instance;
 
-        [SerializeField]
         public Dictionary<string, Queue<GameObject>> poolDictionary;
         public List<Pool> pools;
 

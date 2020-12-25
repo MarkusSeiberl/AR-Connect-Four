@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using Vuforia;
@@ -10,8 +8,8 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
     public GameObject coin1;
     public GameObject coin2;
     public ObjectPooler pooler;
+    public GameLogic gameLogic;
 
-    private static readonly Quaternion COIN_ROTATION = Quaternion.Euler(0, 90, 0);
     private static readonly Vector3 COIN_SCALE = new Vector3(1.3f, 1.3f, 1.3f);
     private static readonly Vector3 COIN_POSITION_1 = new Vector3(-0.5341f, 0.9938f, -0.4682f); 
     private static readonly Vector3 COIN_POSITION_2 = new Vector3(-0.5341f, 0.9938f, -0.3121f);
@@ -22,17 +20,10 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
     private static readonly Vector3 COIN_POSITION_7 = new Vector3(-0.5341f, 0.9938f, 0.4682f);
 
     private readonly List<GameObject> placedCoins = new List<GameObject>();
-
-
-    private GameLogic gameLogic;
+    
     private int currColumn = -1; //column starts at 0
     private GameObject currentCoin = null;
-    //private GameObject previewCoin = null;
     private TrackableBehaviour marker;
-
-    private void Awake() {
-        gameLogic = gameObject.AddComponent<GameLogic>();
-    }
 
     // Start is called before the first frame update
     void Start() {
@@ -53,17 +44,14 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
                 newStatus == TrackableBehaviour.Status.TRACKED ||
                 newStatus == TrackableBehaviour.Status.EXTENDED_TRACKED) {
             DisableKinematic();
-            Debug.Log("IF +++++++++++++++++++++++++");
 
         } else if (previousStatus == TrackableBehaviour.Status.TRACKED &&
                    newStatus == TrackableBehaviour.Status.NO_POSE) {
 
             EnableKinematic();
-            Debug.Log("ELSE IF ##############");
         } else {
 
             EnableKinematic();
-            Debug.Log("ELSE -----------------");
         }
     }
 
@@ -97,10 +85,9 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
     }
 
     public void RemoveCoin() {
-        currentCoin.SetActive(false);
-        //currentCoin = null;
-        //currPlayerNr = -1;
-        //currColumn = -1;
+        if (currentCoin != null) {
+            currentCoin.SetActive(false);
+        }
     }
 
 
@@ -145,14 +132,4 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
             coin.GetComponent<Rigidbody>().isKinematic = false;
         });
     }
-
-    /*private void InstantiateCoin(GameObject coin, Vector3 coinPosition) {
-        pooler.SpawnFromPool("coin1", coinPosition, COIN_ROTATION);
-
-        //currentCoin = Instantiate(coin, transform, false);
-        currentCoin.transform.parent = this.transform;
-        //currentCoin.transform.localRotation = COIN_ROTATION;
-        //currentCoin.transform.localScale = COIN_SCALE;
-        currentCoin.transform.localPosition = coinPosition;
-    }*/
 }

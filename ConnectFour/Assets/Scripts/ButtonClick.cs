@@ -10,6 +10,7 @@ public class ButtonClick : MonoBehaviour, IStateChange {
     public Material errorMaterial;
     public Material lockedMaterial;
     public AudioClip bellSound;
+    public GameLogic gameLogic;
 
     //public readonly List<GameObject> coins = new List<GameObject>();
 
@@ -21,6 +22,7 @@ public class ButtonClick : MonoBehaviour, IStateChange {
     private AudioSource audioSource;
     private VirtualClick currentSelectedButton = null;
     private bool vibrateEnabled = false;
+    private float coolDown = 0;
 
 
     // Start is called before the first frame update
@@ -33,40 +35,55 @@ public class ButtonClick : MonoBehaviour, IStateChange {
 
     // Update is called once per frame
     void Update() {
-        if (currentSelectedButton == null) {
-            return;
-        }
 
         var elapsedTime = Time.deltaTime;
-        currentSelectedButton.elapsedTime -= elapsedTime;
+        if (coolDown > 0) {
+            coolDown -= elapsedTime;
+        }
 
-        if (currentSelectedButton.elapsedTime <= 0 && !vibrateEnabled) {
-            UpdateMaterial(currentSelectedButton.buttonModel, lockedMaterial);
-            vibrateEnabled = true;
-            audioSource.PlayOneShot(bellSound);
+        // if no button is selected return - no need to countdown
+        if (currentSelectedButton != null) {
 
-            coinHandler.PlaceCoin();
-            //TODO check if if column is full
-            //  if so than deactivate VB of this column
+            // One Button is selected -> Countdown till the coin is placed
+            if (coolDown <= 0) {
+                currentSelectedButton.elapsedTime -= elapsedTime;
+            }
+
+            // Button is selected and countdown is at 0 --> place the coin
+            if (currentSelectedButton.elapsedTime <= 0 && !vibrateEnabled) {
+                UpdateMaterial(currentSelectedButton.buttonModel, lockedMaterial);
+                vibrateEnabled = true;
+                audioSource.PlayOneShot(bellSound);
+
+                coinHandler.PlaceCoin();
+                coolDown = 1; // Set time to 1 sec - to not be able to select other buttons
+                              //TODO check if if column is full
+                              //  if so than deactivate VB of this column
+            }
         }
     }
 
     void IStateChange.OnStateChanged() {
         List<VirtualClick> pressedHandlers = GetPressedVirtualButtonHandler();
 
+        // Nothing is selected --> reset currentselectedButton
         if (pressedHandlers.Count == 0) {
-            currentSelectedButton.elapsedTime = VirtualClick.TIME_DELAY;
-            currentSelectedButton = null;
+            if (currentSelectedButton != null) {
+                currentSelectedButton.elapsedTime = VirtualClick.TIME_DELAY;
+                currentSelectedButton = null;
+            }
             vibrateEnabled = false;
             coinHandler.RemoveCoin();
 
         }
-        else if (pressedHandlers.Count == 1) {
+        // If one is selected and the cooldown is over
+        else if (pressedHandlers.Count == 1 && coolDown <= 0) {
             currentSelectedButton = pressedHandlers[0];
             UpdateMaterial(currentSelectedButton.buttonModel, selectedMaterial);
             coinHandler.SetCoinPosition(clickHandler.IndexOf(currentSelectedButton));
 
         }
+        // More than one is selected --> indicate error
         else if (pressedHandlers.Count > 1) {
             coinHandler.RemoveCoin();
             if (currentSelectedButton != null) {
