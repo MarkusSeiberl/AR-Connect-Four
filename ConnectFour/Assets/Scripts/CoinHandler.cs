@@ -74,13 +74,11 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
         currColumn = column;   
     }
 
-    public void PlaceCoin() {
+    public bool PlaceCoin() {
         currentCoin.GetComponent<Rigidbody>().isKinematic = false;
         placedCoins.Add(currentCoin);
-        gameLogic.PlaceCoin(currColumn);
         currentCoin = null;
-        //TODO call Gamelogic to place current coin
-        //TODO spawn new coin (for next player) but not active
+        return gameLogic.PlaceCoin(currColumn);
 
     }
 

@@ -12,8 +12,6 @@ public class ButtonClick : MonoBehaviour, IStateChange {
     public AudioClip bellSound;
     public GameLogic gameLogic;
 
-    //public readonly List<GameObject> coins = new List<GameObject>();
-
     private readonly List<string> numbers = new List<string> { "n1_obj", "n2_obj", "n3_obj", "n4_obj", "n5_obj", "n6_obj", "n7_obj" };
     private readonly List<string> virtualButtons = new List<string> { "VB1", "VB2", "VB3", "VB4", "VB5", "VB6", "VB7" };
     private readonly List<VirtualClick> clickHandler = new List<VirtualClick>();
@@ -22,6 +20,7 @@ public class ButtonClick : MonoBehaviour, IStateChange {
     private AudioSource audioSource;
     private VirtualClick currentSelectedButton = null;
     private bool vibrateEnabled = false;
+    private bool isGameFinished = false;
     private float coolDown = 0;
 
 
@@ -51,14 +50,7 @@ public class ButtonClick : MonoBehaviour, IStateChange {
 
             // Button is selected and countdown is at 0 --> place the coin
             if (currentSelectedButton.elapsedTime <= 0 && !vibrateEnabled) {
-                UpdateMaterial(currentSelectedButton.buttonModel, lockedMaterial);
-                vibrateEnabled = true;
-                audioSource.PlayOneShot(bellSound);
-
-                coinHandler.PlaceCoin();
-                coolDown = 1; // Set time to 1 sec - to not be able to select other buttons
-                              //TODO check if if column is full
-                              //  if so than deactivate VB of this column
+                PlaceCoin();
             }
         }
     }
@@ -77,14 +69,14 @@ public class ButtonClick : MonoBehaviour, IStateChange {
 
         }
         // If one is selected and the cooldown is over
-        else if (pressedHandlers.Count == 1 && coolDown <= 0) {
+        else if (pressedHandlers.Count == 1 && coolDown <= 0 && !isGameFinished) {
             currentSelectedButton = pressedHandlers[0];
             UpdateMaterial(currentSelectedButton.buttonModel, selectedMaterial);
             coinHandler.SetCoinPosition(clickHandler.IndexOf(currentSelectedButton));
 
         }
         // More than one is selected --> indicate error
-        else if (pressedHandlers.Count > 1) {
+        else if (pressedHandlers.Count > 1 && !isGameFinished) {
             coinHandler.RemoveCoin();
             if (currentSelectedButton != null) {
                 currentSelectedButton.elapsedTime = VirtualClick.TIME_DELAY;
@@ -96,6 +88,26 @@ public class ButtonClick : MonoBehaviour, IStateChange {
                 UpdateMaterial(vc.buttonModel, errorMaterial);
             }
         }
+    }
+
+    private void PlaceCoin() {
+        UpdateMaterial(currentSelectedButton.buttonModel, lockedMaterial);
+        vibrateEnabled = true;
+        audioSource.PlayOneShot(bellSound);
+
+        isGameFinished = coinHandler.PlaceCoin(); // Set flag for clickhandler to not interact
+        coolDown = 1; // Set time to 1 sec - to not be able to select other buttons
+
+
+
+        //TODO check if if column is full
+        //  if so than deactivate VB of this column
+        //  MB no need for it - as an IndexOutOfArrayException will occur and the coin will not be placed
+        //var currentColumn = clickHandler.IndexOf(currentSelectedButton);
+        //if (gameLogic.isColumnFull(currentColumn)) {
+        //    clickHandler[currentColumn] = null;
+        //}
+
     }
 
     private List<VirtualClick> GetPressedVirtualButtonHandler() {

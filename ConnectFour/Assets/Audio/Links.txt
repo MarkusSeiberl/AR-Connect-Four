@@ -1,0 +1,5 @@
+game_win.mp3:
+https://www.zapsplat.com/music/cartoon-success-fanfare/
+
+bell_ding.wav:
+https://freesound.org/people/InspectorJ/sounds/484344/

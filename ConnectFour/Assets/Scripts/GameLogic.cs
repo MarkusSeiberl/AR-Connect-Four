@@ -6,6 +6,10 @@ public class GameLogic : MonoBehaviour {
 
     public GameObject player1Object;
     public GameObject player2Object;
+    public GameObject player1Wins;
+    public GameObject player2Wins;
+    public GameObject leftParticleSystem;
+    public GameObject rightParticleSystem;
 
     private readonly int[,] gameField = new int[6, 7];
 
@@ -16,14 +20,20 @@ public class GameLogic : MonoBehaviour {
         playerNr = 1;
     }
 
-    public void PlaceCoin(int column) {
+    public bool PlaceCoin(int column) {
        
         int rowIndex = RowNumberOfNextFreeSlot(column);
         gameField[rowIndex, column] = playerNr;
-
         
-        ConnectedFour(rowIndex, column, playerNr); //TODO maybe let coinhandler check it to act upon it
-        ChangePlayer();
+        var hasConnectedFour = ConnectedFour(rowIndex, column, playerNr); //TODO maybe let coinhandler check it to act upon it
+        if (hasConnectedFour) {
+            ActivateVisualFeedback();
+            ActivateAuditiveFeedback();
+            return hasConnectedFour;
+        } else {
+            ChangePlayer();
+            return hasConnectedFour;
+        }
     }
      
     public bool ConnectedFour(int row, int column, int playerNr) {
@@ -185,5 +195,24 @@ public class GameLogic : MonoBehaviour {
             player1Object.SetActive(true);
             player2Object.SetActive(false);
         }
+    }
+
+    private void ActivateVisualFeedback() {
+        // Activate Particle System
+        leftParticleSystem.SetActive(true);
+        rightParticleSystem.SetActive(true);
+        
+        // Show which user won
+        if(playerNr == 1) {
+            player1Wins.SetActive(true);
+        } else {
+            player2Wins.SetActive(true);
+        }
+
+        //Display Reset Button
+    }
+
+    private void ActivateAuditiveFeedback() {
+
     }
 }
