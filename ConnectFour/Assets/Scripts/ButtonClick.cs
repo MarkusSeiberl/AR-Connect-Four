@@ -10,12 +10,15 @@ public class ButtonClick : MonoBehaviour, IStateChange {
     public Material lockedMaterial;
     public AudioClip bellSound;
     public GameLogic gameLogic;
+    public SnackBarHandler snackBarHandler;
+    public CoinHandler coinHandler;
 
     private readonly List<string> numbers = new List<string> { "n1_obj", "n2_obj", "n3_obj", "n4_obj", "n5_obj", "n6_obj", "n7_obj" };
     private readonly List<string> virtualButtons = new List<string> { "VB1", "VB2", "VB3", "VB4", "VB5", "VB6", "VB7" };
     private readonly List<VirtualClick> clickHandler = new List<VirtualClick>();
 
-    private CoinHandler coinHandler;
+    
+    //private CoinHandler coinHandler;
     private AudioSource audioSource;
     private VirtualClick currentSelectedButton = null;
     private bool vibrateEnabled = false;
@@ -27,8 +30,6 @@ public class ButtonClick : MonoBehaviour, IStateChange {
     void Start() {
         InitButtonClickHandlers();
         audioSource = GetComponent<AudioSource>();
-        GameObject imageTarget = GameObject.Find("ImageTarget");
-        coinHandler = imageTarget.GetComponent<CoinHandler>();
     }
 
     // Update is called once per frame
@@ -109,6 +110,10 @@ public class ButtonClick : MonoBehaviour, IStateChange {
         isGameFinished = coinHandler.PlaceCoin(); // Set flag for clickhandler to not interact
         coolDown = 1; // Set time to 1 sec - to not be able to select other buttons
 
+        if (isGameFinished) {
+            // Show Snackbar
+            snackBarHandler.StartTranslation(Translation.UP);
+        }
 
 
         //TODO check if if column is full

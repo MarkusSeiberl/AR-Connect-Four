@@ -59,6 +59,8 @@ public class GameLogic : MonoBehaviour {
         player2Object.SetActive(false);
         player1Wins.SetActive(false);
         player2Wins.SetActive(false);
+        leftParticleSystem.SetActive(false);
+        rightParticleSystem.SetActive(false);
     }
 
     private int RowNumberOfNextFreeSlot(int column) {
@@ -105,8 +107,9 @@ public class GameLogic : MonoBehaviour {
         var rightUpperDiagonal = CountRightUpperDiagonal(row, column, playerNr);
         var leftLowerDiagonal = CountLeftLowerDiagonal(row, column, playerNr);
         var rightLowerDiagonal = CountRightLowerDiagonal(row, column, playerNr);
-        var count = 1 + leftUpperDiagonal + rightUpperDiagonal + leftLowerDiagonal + rightLowerDiagonal;
-        if (count >= 4) {
+        var diagonal1 = 1 + leftLowerDiagonal + rightUpperDiagonal;
+        var diagonal2 = 1 + rightLowerDiagonal + leftUpperDiagonal;
+        if (diagonal1 >= 4 || diagonal2 >= 4) { 
             return true;
         }
         return false;
