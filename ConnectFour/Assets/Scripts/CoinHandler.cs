@@ -5,8 +5,6 @@ using Vuforia;
 
 public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
 
-    public GameObject coin1;
-    public GameObject coin2;
     public ObjectPooler pooler;
     public GameLogic gameLogic;
 
@@ -88,6 +86,19 @@ public class CoinHandler : MonoBehaviour, ITrackableEventHandler {
         }
     }
 
+    public void ResetGame() {
+        while (placedCoins.Count > 0) {
+            GameObject coin = placedCoins[0];
+            coin.GetComponent<Rigidbody>().isKinematic = true;
+            coin.SetActive(false);
+            placedCoins.RemoveAt(0);
+        }
+
+        currentCoin = null;
+        currColumn = -1;
+
+        gameLogic.ResetGame();
+    }
 
 
     private void UpdateCoinPostion(Vector3 correctPostion) {

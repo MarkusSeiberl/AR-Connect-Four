@@ -10,13 +10,15 @@ public class GameLogic : MonoBehaviour {
     public GameObject player2Wins;
     public GameObject leftParticleSystem;
     public GameObject rightParticleSystem;
+    public AudioClip gameWinAudioClip;
 
-    private readonly int[,] gameField = new int[6, 7];
-
+    private AudioSource audioSource;
+    private int[,] gameField = new int[6, 7];
     private int playerNr;
 
     // Start is called before the first frame update
     void Start() {
+        audioSource = GetComponent<AudioSource>();
         playerNr = 1;
     }
 
@@ -48,6 +50,15 @@ public class GameLogic : MonoBehaviour {
      
     public int GetCurrentPlayerNumber() {
         return playerNr;
+    }
+
+    public void ResetGame() {
+        playerNr = 1;
+        gameField = new int[6, 7];
+        player1Object.SetActive(true);
+        player2Object.SetActive(false);
+        player1Wins.SetActive(false);
+        player2Wins.SetActive(false);
     }
 
     private int RowNumberOfNextFreeSlot(int column) {
@@ -213,6 +224,6 @@ public class GameLogic : MonoBehaviour {
     }
 
     private void ActivateAuditiveFeedback() {
-
+        audioSource.PlayOneShot(gameWinAudioClip);
     }
 }

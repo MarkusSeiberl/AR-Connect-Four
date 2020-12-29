@@ -3,7 +3,6 @@ using UnityEngine;
 using Vuforia;
 
 public class ButtonClick : MonoBehaviour, IStateChange {
-
     
     public Material selectedMaterial;
     public Material unselectedMaterial;
@@ -88,6 +87,18 @@ public class ButtonClick : MonoBehaviour, IStateChange {
                 UpdateMaterial(vc.buttonModel, errorMaterial);
             }
         }
+    }
+
+    public void ResetGame() {
+        clickHandler.Clear();
+        InitButtonClickHandlers();
+
+        currentSelectedButton = null;
+        vibrateEnabled = false;
+        isGameFinished = false;
+        coolDown = 0;
+
+        coinHandler.ResetGame();
     }
 
     private void PlaceCoin() {
